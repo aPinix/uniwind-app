@@ -1,1 +1,11 @@
-{ "recommendations": ["expo.vscode-expo-tools"] }
+{
+  "recommendations": [
+    "biomejs.biome",
+    "bradlc.vscode-tailwindcss",
+    "expo.vscode-expo-tools",
+    "lokalise.i18n-ally",
+    "nhoizey.gremlins",
+    "shardulm94.trailing-spaces",
+    "viktorzetterstrom.non-breaking-space-highlighter"
+  ]
+}

@@ -1,3 +1,5 @@
+import * as StoreReview from 'expo-store-review';
+import { Button } from 'heroui-native';
 import { Pressable, Text, View } from 'react-native';
 
 import '../global.css';
@@ -20,8 +22,15 @@ export default function Index() {
         </View>
       </View>
 
-      <Pressable className="rounded-md bg-blue-500 p-4 active:bg-blue-700 dark:bg-purple-500 dark:active:bg-purple-700">
-        <Text className="font-bold text-white">Click Me</Text>
+      <Button onPress={() => console.log('Pressed!')}>Get Started</Button>
+
+      <Pressable
+        className="rounded-md bg-blue-500 px-6 py-4 active:bg-blue-700 dark:bg-purple-500 dark:active:bg-purple-700"
+        onPress={() => {
+          StoreReview.requestReview();
+        }}
+      >
+        <Text className="font-bold text-white">Button</Text>
       </Pressable>
 
       <View className="mt-2 gap-1 text-center">

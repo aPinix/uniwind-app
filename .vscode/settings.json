@@ -57,5 +57,14 @@
   "tailwindCSS.classFunctions": ["useResolveClassNames"],
 
   // i18n
-  "i18n-ally.localesPaths": ["src/locales", "src/lib/i18n"]
+  "i18n-ally.localesPaths": [
+    // "src/locales",
+    // "src/lib/i18n",
+    // "assets/i18n"
+  ],
+  "i18n-ally.pathMatcher": "{locale}.json",
+  "i18n-ally.sourceLanguage": "en",
+  "i18n-ally.displayLanguage": "en",
+  "i18n-ally.sortKeys": true,
+  "i18n-ally.ignoreFiles": ["**/*.bak", "**/.translate_cache.json"]
 }
