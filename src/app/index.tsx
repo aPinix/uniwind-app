@@ -28,7 +28,7 @@ export default function Index() {
         title="Hello, world!"
         description="This is a description of the bottom sheet"
         isOpen={isOpen}
-        // snapPoints={['50%', '80%', '100%']}
+        snapPoints={['50%', '80%', '100%']}
         onOpenChange={setIsOpen}
         trigger={<Button>Open Bottom Sheet</Button>}
       >

@@ -1,7 +1,13 @@
+import type { BottomSheetBackgroundProps } from '@gorhom/bottom-sheet';
 import { BlurView, type BlurViewProps } from 'expo-blur';
+import {
+  GlassView,
+  isGlassEffectAPIAvailable,
+  isLiquidGlassAvailable,
+} from 'expo-glass-effect';
 import { BottomSheet, useBottomSheet } from 'heroui-native/bottom-sheet';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, useWindowDimensions, View } from 'react-native';
 import Animated, {
   type DerivedValue,
   type SharedValue,
@@ -20,18 +26,42 @@ type UiBottomSheetSnapPoints =
   | Array<UiBottomSheetSnapPoint>
   | SharedValue<Array<UiBottomSheetSnapPoint>>;
 
+export const UiBottomSheetBackgroundVariantE = {
+  Default: 'default',
+  Transparent: 'transparent',
+  Blur: 'blur',
+  Glass: 'glass',
+} as const;
+type UiBottomSheetBackgroundVariantT =
+  (typeof UiBottomSheetBackgroundVariantE)[keyof typeof UiBottomSheetBackgroundVariantE];
+
+export const UiBottomSheetOverlayVariantE = {
+  Default: 'default',
+  Transparent: 'transparent',
+  Blur: 'blur',
+  None: 'none',
+} as const;
+type UiBottomSheetOverlayVariantT =
+  (typeof UiBottomSheetOverlayVariantE)[keyof typeof UiBottomSheetOverlayVariantE];
+
 interface UiBottomSheetProps {
   isOpen?: boolean;
   isDefaultOpen?: boolean;
   title?: string | React.ReactNode;
+  titleClassName?: string;
   description?: string | React.ReactNode;
+  descriptionClassName?: string;
   trigger?: React.ReactNode;
   snapPoints?: UiBottomSheetSnapPoints;
   snapPointsIncludeSafeArea?: boolean;
   hasCloseButton?: boolean;
-  hasOverlay?: boolean;
-  hasBlurOverlay?: boolean;
-  isCloseOnOverlayPress?: boolean;
+  overlayVariant?: UiBottomSheetOverlayVariantT;
+  overlayBlurAmount?: number;
+  overlayClosePress?: boolean;
+  backgroundVariant?: UiBottomSheetBackgroundVariantT;
+  backgroundBlurAmount?: number;
+  classNameContentWrapper?: string;
+  classNameContent?: string;
   onOpenChange: (isOpen: boolean) => void;
   children?: React.ReactNode;
 }
@@ -39,15 +69,33 @@ interface UiBottomSheetProps {
 export const UiBottomSheet = ({
   isOpen,
   isDefaultOpen = false,
+
+  // header
   title,
+  titleClassName,
   description,
+  descriptionClassName,
   trigger,
+
+  // snap points
   snapPoints,
   snapPointsIncludeSafeArea = true,
+
+  // close button
   hasCloseButton = false,
-  hasOverlay = true,
-  hasBlurOverlay = true,
-  isCloseOnOverlayPress = true,
+
+  // overlay
+  overlayVariant = UiBottomSheetOverlayVariantE.Default,
+  overlayBlurAmount = 40,
+  overlayClosePress = true,
+
+  // background
+  backgroundVariant = UiBottomSheetBackgroundVariantE.Default,
+  backgroundBlurAmount = 40,
+
+  classNameContentWrapper,
+  classNameContent,
+
   onOpenChange,
   children,
 }: UiBottomSheetProps) => {
@@ -82,6 +130,18 @@ export const UiBottomSheet = ({
   const hasContentSnapPoints =
     contentSnapPoints !== undefined &&
     (!Array.isArray(contentSnapPoints) || contentSnapPoints.length > 0);
+  const backgroundComponent = useMemo(
+    () =>
+      getBottomSheetBackgroundComponent(
+        backgroundVariant,
+        backgroundBlurAmount
+      ),
+    [backgroundBlurAmount, backgroundVariant]
+  );
+  const backgroundClassName =
+    backgroundVariant === UiBottomSheetBackgroundVariantE.Default
+      ? undefined
+      : cn('rounded-t-4xl bg-transparent shadow-overlay');
 
   return (
     <BottomSheet
@@ -91,36 +151,59 @@ export const UiBottomSheet = ({
     >
       {trigger && <BottomSheet.Trigger asChild>{trigger}</BottomSheet.Trigger>}
       <BottomSheet.Portal>
-        {hasOverlay &&
-          (hasBlurOverlay ? (
-            <BottomSheetBlurOverlay isCloseOnPress={isCloseOnOverlayPress} />
-          ) : (
-            <BottomSheet.Overlay isCloseOnPress={isCloseOnOverlayPress} />
-          ))}
+        {overlayVariant !== UiBottomSheetOverlayVariantE.None && (
+          <BottomSheetOverlay
+            blurAmount={overlayBlurAmount}
+            isCloseOnPress={overlayClosePress}
+            overlayVariant={overlayVariant}
+          />
+        )}
         <BottomSheet.Content
           snapPoints={hasContentSnapPoints ? contentSnapPoints : undefined}
           enableOverDrag={true}
           enableDynamicSizing={!hasContentSnapPoints}
-          contentContainerClassName={cn(
-            hasContentSnapPoints ? 'h-full' : 'flex-none'
+          backgroundComponent={backgroundComponent}
+          backgroundClassName={backgroundClassName}
+          handleComponent={() => (
+            <View className="h-6 flex-1 items-center justify-center bg-transparent">
+              <View className="h-1 w-8 rounded-full bg-gray-400 dark:bg-gray-600" />
+            </View>
           )}
-          contentContainerProps={
-            hasContentSnapPoints
-              ? undefined
-              : { style: bottomSheetStyles.dynamicContentContainer }
-          }
+          contentContainerClassName={cn(
+            'flex flex-col gap-4 px-4 pt-0',
+            hasContentSnapPoints ? 'h-full' : 'flex-none',
+            classNameContentWrapper
+          )}
         >
           {hasCloseButton && (
             <BottomSheet.Close className="absolute top-0 right-4" />
           )}
-          {title && <BottomSheet.Title>{title}</BottomSheet.Title>}
-          {description && (
-            <BottomSheet.Description>{description}</BottomSheet.Description>
+          {(title || description) && (
+            <View className="">
+              {title && (
+                <BottomSheet.Title className={titleClassName}>
+                  {title}
+                </BottomSheet.Title>
+              )}
+              {description && (
+                <BottomSheet.Description className={descriptionClassName}>
+                  {description}
+                </BottomSheet.Description>
+              )}
+            </View>
           )}
 
-          {hasContentSnapPoints
-            ? children && <View className="flex-1">{children}</View>
-            : children}
+          {children && (
+            <View
+              className={cn(
+                'flex flex-1 flex-col',
+                hasContentSnapPoints && 'flex-1',
+                classNameContent
+              )}
+            >
+              {children}
+            </View>
+          )}
         </BottomSheet.Content>
       </BottomSheet.Portal>
     </BottomSheet>
@@ -129,19 +212,26 @@ export const UiBottomSheet = ({
 
 // overlay --------------------
 
-interface BottomSheetBlurOverlayProps {
+interface BottomSheetOverlayProps {
+  blurAmount: number;
   isCloseOnPress: boolean;
+  overlayVariant: UiBottomSheetOverlayVariantT;
 }
 
-const BottomSheetBlurOverlay = ({
+const BottomSheetOverlay = ({
+  blurAmount,
   isCloseOnPress,
-}: BottomSheetBlurOverlayProps) => {
+  overlayVariant,
+}: BottomSheetOverlayProps) => {
   const { theme } = useUniwind();
   const { isOpen, onOpenChange } = useBottomSheet();
   const [isOverlayMounted, setIsOverlayMounted] = useState(isOpen);
+  const isBlurOverlay = overlayVariant === UiBottomSheetOverlayVariantE.Blur;
   const blurIntensity = useDerivedValue<number>(() => {
-    return withTiming(isOpen ? 40 : 0, { duration: isOpen ? 200 : 150 });
-  }, [isOpen]);
+    return withTiming(isOpen && isBlurOverlay ? blurAmount : 0, {
+      duration: isOpen ? 200 : 150,
+    });
+  }, [blurAmount, isBlurOverlay, isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -165,20 +255,29 @@ const BottomSheetBlurOverlay = ({
 
   return (
     <Pressable
+      className={cn(
+        'absolute inset-0',
+        overlayVariant === UiBottomSheetOverlayVariantE.Default &&
+          'bg-backdrop',
+        overlayVariant === UiBottomSheetOverlayVariantE.Transparent &&
+          'bg-transparent',
+        isBlurOverlay && 'bg-transparent'
+      )}
       pointerEvents={isOpen ? 'auto' : 'none'}
-      style={StyleSheet.absoluteFill}
       onPress={() => {
         if (isCloseOnPress) {
           onOpenChange(false);
         }
       }}
     >
-      <AnimatedBlurView
-        blurIntensity={blurIntensity}
-        pointerEvents="none"
-        style={StyleSheet.absoluteFill}
-        tint={theme === 'light' ? 'dark' : 'light'}
-      />
+      {isBlurOverlay && (
+        <AnimatedBlurView
+          blurIntensity={blurIntensity}
+          className="absolute inset-0"
+          pointerEvents="none"
+          tint={theme === 'light' ? 'dark' : 'light'}
+        />
+      )}
     </Pressable>
   );
 };
@@ -200,7 +299,63 @@ const AnimatedBlurView = ({
   return <RBlurView animatedProps={animatedProps} {...props} />;
 };
 
+interface BottomSheetVisualBackgroundProps extends BottomSheetBackgroundProps {
+  blurAmount: number;
+}
+
+const BottomSheetBlurBackground = ({
+  blurAmount,
+  pointerEvents,
+  style,
+}: BottomSheetVisualBackgroundProps) => {
+  return (
+    <View
+      className="overflow-hidden rounded-t-[32px] bg-transparent shadow-overlay"
+      pointerEvents={pointerEvents}
+      style={style}
+    >
+      <BlurView
+        className="absolute inset-0 bg-transparent"
+        intensity={blurAmount}
+        tint="systemMaterial"
+      />
+    </View>
+  );
+};
+
+const BottomSheetGlassBackground = (
+  props: BottomSheetVisualBackgroundProps
+) => {
+  if (!getIsGlassBackgroundAvailable()) {
+    return <BottomSheetBlurBackground {...props} />;
+  }
+
+  const { pointerEvents, style } = props;
+
+  return (
+    <View
+      className="overflow-hidden rounded-t-[32px] bg-transparent shadow-overlay"
+      pointerEvents={pointerEvents}
+      style={style}
+    >
+      <GlassView
+        className="absolute inset-0 bg-transparent"
+        colorScheme="auto"
+        glassEffectStyle="regular"
+      />
+    </View>
+  );
+};
+
 // utils --------------------
+
+const getIsGlassBackgroundAvailable = () => {
+  try {
+    return isGlassEffectAPIAvailable() && isLiquidGlassAvailable();
+  } catch {
+    return false;
+  }
+};
 
 const getSafeAreaAdjustedSnapPoint = (
   snapPoint: UiBottomSheetSnapPoint,
@@ -224,8 +379,28 @@ const getSafeAreaAdjustedSnapPoint = (
     : snapPoint;
 };
 
-const bottomSheetStyles = StyleSheet.create({
-  dynamicContentContainer: {
-    flex: 0,
-  },
-});
+const getBottomSheetBackgroundComponent = (
+  backgroundVariant: UiBottomSheetBackgroundVariantT,
+  backgroundBlurAmount: number
+) => {
+  switch (backgroundVariant) {
+    case UiBottomSheetBackgroundVariantE.Transparent:
+      return null;
+    case UiBottomSheetBackgroundVariantE.Blur:
+      return (props: BottomSheetBackgroundProps) => (
+        <BottomSheetBlurBackground
+          {...props}
+          blurAmount={backgroundBlurAmount}
+        />
+      );
+    case UiBottomSheetBackgroundVariantE.Glass:
+      return (props: BottomSheetBackgroundProps) => (
+        <BottomSheetGlassBackground
+          {...props}
+          blurAmount={backgroundBlurAmount}
+        />
+      );
+    case UiBottomSheetBackgroundVariantE.Default:
+      return undefined;
+  }
+};
