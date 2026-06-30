@@ -1,12 +1,14 @@
 import * as StoreReview from 'expo-store-review';
 import { Button } from 'heroui-native';
+import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-
-import '../global.css';
+import { UiBottomSheet } from '@/components/ui/ui-bottom-sheet';
 
 export default function Index() {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <View className="flex-1 items-center justify-center gap-4 px-10">
+    <View className="flex-1 items-center justify-center gap-4 bg-slate-50 px-10 dark:bg-slate-950">
       <View className="text-center">
         <Text className="text-center font-bold text-2xl">Uniwind</Text>
         <Text className="text-center">Combining Pseudo-classes</Text>
@@ -22,7 +24,16 @@ export default function Index() {
         </View>
       </View>
 
-      <Button onPress={() => console.log('Pressed!')}>Get Started</Button>
+      <UiBottomSheet
+        title="Hello, world!"
+        description="This is a description of the bottom sheet"
+        isOpen={isOpen}
+        // snapPoints={['50%', '80%', '100%']}
+        onOpenChange={setIsOpen}
+        trigger={<Button>Open Bottom Sheet</Button>}
+      >
+        <Text>Hello, world!</Text>
+      </UiBottomSheet>
 
       <Pressable
         className="rounded-md bg-blue-500 px-6 py-4 active:bg-blue-700 dark:bg-purple-500 dark:active:bg-purple-700"
