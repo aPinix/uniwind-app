@@ -13,6 +13,7 @@ export default function Index() {
     useState(false);
   const [isOpenBottomSheetTransparent, setIsOpenBottomSheetTransparent] =
     useState(false);
+  const [isOpenBottomSheetTint, setIsOpenBottomSheetTint] = useState(false);
   const [isOpenBottomSheetBlur, setIsOpenBottomSheetBlur] = useState(false);
   const [isOpenBottomSheetGlass, setIsOpenBottomSheetGlass] = useState(false);
 
@@ -60,6 +61,20 @@ export default function Index() {
       </UiBottomSheet>
 
       <UiBottomSheet
+        backgroundVariant={UiBottomSheetBackgroundVariantE.Default}
+        description="This is a description of the bottom sheet"
+        hasHandle={false}
+        isOpen={isOpenBottomSheetTint}
+        onOpenChange={setIsOpenBottomSheetTint}
+        overlayVariant={UiBottomSheetOverlayVariantE.Tint}
+        snapPoints={['50%', '80%', '100%']}
+        title="Bottom Sheet Tint"
+        trigger={<Button>Bottom Sheet Tint</Button>}
+      >
+        <Text>Bottom Sheet Tint</Text>
+      </UiBottomSheet>
+
+      <UiBottomSheet
         backgroundVariant={UiBottomSheetBackgroundVariantE.Blur}
         description="This is a description of the bottom sheet"
         isOpen={isOpenBottomSheetBlur}
@@ -77,6 +92,7 @@ export default function Index() {
         description="This is a description of the bottom sheet"
         isOpen={isOpenBottomSheetGlass}
         onOpenChange={setIsOpenBottomSheetGlass}
+        overlayVariant={UiBottomSheetOverlayVariantE.Transparent}
         snapPoints={['50%', '80%', '100%']}
         title="Bottom Sheet Glass"
         trigger={<Button>Bottom Sheet Glass</Button>}

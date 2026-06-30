@@ -57,6 +57,7 @@ type UiBottomSheetBackgroundGlassFallbackVariantT = Exclude<
 export const UiBottomSheetOverlayVariantE = {
   Default: 'default',
   Transparent: 'transparent',
+  Tint: 'tint',
   Blur: 'blur',
   Glass: 'glass',
   None: 'none',
@@ -352,10 +353,12 @@ const BottomSheetOverlay = ({
   const { theme } = useUniwind();
   const { isOpen, onOpenChange } = useBottomSheet();
   const [isOverlayMounted, setIsOverlayMounted] = useState(isOpen);
+  const isTintOverlay = overlayVariant === UiBottomSheetOverlayVariantE.Tint;
   const isBlurOverlay = overlayVariant === UiBottomSheetOverlayVariantE.Blur;
   const isDefaultOverlay =
     overlayVariant === UiBottomSheetOverlayVariantE.Default;
   const isGlassOverlay = overlayVariant === UiBottomSheetOverlayVariantE.Glass;
+  const overlayTintColor = getOverlayTintColor(theme, blurAmount);
   const overlayProgress = useDerivedValue<number>(() => {
     return withTiming(isOpen ? 1 : 0, {
       duration: isOpen ? 200 : 150,
@@ -369,6 +372,13 @@ const BottomSheetOverlay = ({
       opacity: isDefaultOverlay ? overlayProgress.get() : 0,
     }),
     [isDefaultOverlay]
+  );
+  const tintOverlayStyle = useAnimatedStyle(
+    () => ({
+      backgroundColor: overlayTintColor,
+      opacity: isTintOverlay ? overlayProgress.get() : 0,
+    }),
+    [isTintOverlay, overlayTintColor]
   );
 
   useEffect(() => {
@@ -401,7 +411,10 @@ const BottomSheetOverlay = ({
         'absolute inset-0',
         overlayVariant === UiBottomSheetOverlayVariantE.Transparent &&
           'bg-transparent',
-        (isBlurOverlay || isDefaultOverlay || isGlassOverlay) &&
+        (isTintOverlay ||
+          isBlurOverlay ||
+          isDefaultOverlay ||
+          isGlassOverlay) &&
           'bg-transparent',
         className
       )}
@@ -419,13 +432,20 @@ const BottomSheetOverlay = ({
           style={defaultOverlayStyle}
         />
       )}
+      {isTintOverlay && (
+        <Animated.View
+          className="absolute inset-0"
+          pointerEvents="none"
+          style={tintOverlayStyle}
+        />
+      )}
       {isBlurOverlay && (
         <AnimatedBlurView
           blurIntensity={blurIntensity}
           blurTarget={blurTarget}
           className="absolute inset-0"
           pointerEvents="none"
-          tint={theme === 'light' ? 'dark' : 'light'}
+          tint={'dark'}
         />
       )}
       {isGlassOverlay && (
@@ -588,6 +608,16 @@ const getResolvedOverlayVariant = (
   }
 
   return overlayVariant;
+};
+
+const getOverlayTintColor = (theme: string, amount: number) => {
+  const normalizedAmount = Number.isFinite(amount)
+    ? Math.min(Math.max(amount, 0), 100) / 100
+    : 0.4;
+  const alpha = normalizedAmount * 1;
+  const color = theme === 'light' ? '0, 0, 0' : '0, 0, 0';
+
+  return `rgba(${color}, ${alpha})`;
 };
 
 const getSafeAreaAdjustedSnapPoint = (
