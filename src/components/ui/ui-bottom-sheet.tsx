@@ -1,22 +1,19 @@
 import { BlurView, type BlurViewProps } from 'expo-blur';
-import {
-  BottomSheet,
-  useBottomSheet,
-  useBottomSheetAnimation,
-} from 'heroui-native/bottom-sheet';
+import { BottomSheet, useBottomSheet } from 'heroui-native/bottom-sheet';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   type DerivedValue,
-  interpolate,
   type SharedValue,
   useAnimatedProps,
   useAnimatedReaction,
   useDerivedValue,
+  withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useUniwind } from 'uniwind';
+import { cn } from '@/lib/utils';
 
 type UiBottomSheetSnapPoint = string | number;
 type UiBottomSheetSnapPoints =
@@ -34,6 +31,7 @@ interface UiBottomSheetProps {
   hasCloseButton?: boolean;
   hasOverlay?: boolean;
   hasBlurOverlay?: boolean;
+  isCloseOnOverlayPress?: boolean;
   onOpenChange: (isOpen: boolean) => void;
   children?: React.ReactNode;
 }
@@ -46,9 +44,10 @@ export const UiBottomSheet = ({
   trigger,
   snapPoints,
   snapPointsIncludeSafeArea = true,
-  hasCloseButton = true,
+  hasCloseButton = false,
   hasOverlay = true,
   hasBlurOverlay = true,
+  isCloseOnOverlayPress = true,
   onOpenChange,
   children,
 }: UiBottomSheetProps) => {
@@ -94,15 +93,22 @@ export const UiBottomSheet = ({
       <BottomSheet.Portal>
         {hasOverlay &&
           (hasBlurOverlay ? (
-            <BottomSheetBlurOverlay />
+            <BottomSheetBlurOverlay isCloseOnPress={isCloseOnOverlayPress} />
           ) : (
-            <BottomSheet.Overlay />
+            <BottomSheet.Overlay isCloseOnPress={isCloseOnOverlayPress} />
           ))}
         <BottomSheet.Content
           snapPoints={hasContentSnapPoints ? contentSnapPoints : undefined}
           enableOverDrag={true}
           enableDynamicSizing={!hasContentSnapPoints}
-          contentContainerClassName="h-full"
+          contentContainerClassName={cn(
+            hasContentSnapPoints ? 'h-full' : 'flex-none'
+          )}
+          contentContainerProps={
+            hasContentSnapPoints
+              ? undefined
+              : { style: bottomSheetStyles.dynamicContentContainer }
+          }
         >
           {hasCloseButton && (
             <BottomSheet.Close className="absolute top-0 right-4" />
@@ -112,7 +118,9 @@ export const UiBottomSheet = ({
             <BottomSheet.Description>{description}</BottomSheet.Description>
           )}
 
-          {children && <View className="flex-1">{children}</View>}
+          {hasContentSnapPoints
+            ? children && <View className="flex-1">{children}</View>
+            : children}
         </BottomSheet.Content>
       </BottomSheet.Portal>
     </BottomSheet>
@@ -121,14 +129,19 @@ export const UiBottomSheet = ({
 
 // overlay --------------------
 
-const BottomSheetBlurOverlay = () => {
+interface BottomSheetBlurOverlayProps {
+  isCloseOnPress: boolean;
+}
+
+const BottomSheetBlurOverlay = ({
+  isCloseOnPress,
+}: BottomSheetBlurOverlayProps) => {
   const { theme } = useUniwind();
   const { isOpen, onOpenChange } = useBottomSheet();
-  const { progress } = useBottomSheetAnimation();
   const [isOverlayMounted, setIsOverlayMounted] = useState(isOpen);
-  const blurIntensity = useDerivedValue(() => {
-    return interpolate(progress.get(), [0, 1, 2], [0, 40, 0]);
-  });
+  const blurIntensity = useDerivedValue<number>(() => {
+    return withTiming(isOpen ? 40 : 0, { duration: isOpen ? 200 : 150 });
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -137,18 +150,16 @@ const BottomSheetBlurOverlay = () => {
   }, [isOpen]);
 
   useAnimatedReaction(
-    () => progress.get(),
+    () => blurIntensity.get(),
     (value) => {
-      const isClosed = value <= 0.001 || value >= 1.999;
-
-      if (!isOpen && isClosed) {
+      if (!isOpen && value <= 0.001) {
         scheduleOnRN(setIsOverlayMounted, false);
       }
     },
     [isOpen]
   );
 
-  if (!isOverlayMounted) {
+  if (!(isOpen || isOverlayMounted)) {
     return null;
   }
 
@@ -156,7 +167,11 @@ const BottomSheetBlurOverlay = () => {
     <Pressable
       pointerEvents={isOpen ? 'auto' : 'none'}
       style={StyleSheet.absoluteFill}
-      onPress={() => onOpenChange(false)}
+      onPress={() => {
+        if (isCloseOnPress) {
+          onOpenChange(false);
+        }
+      }}
     >
       <AnimatedBlurView
         blurIntensity={blurIntensity}
@@ -208,3 +223,9 @@ const getSafeAreaAdjustedSnapPoint = (
     ? (percentage / 100) * availableSize
     : snapPoint;
 };
+
+const bottomSheetStyles = StyleSheet.create({
+  dynamicContentContainer: {
+    flex: 0,
+  },
+});
