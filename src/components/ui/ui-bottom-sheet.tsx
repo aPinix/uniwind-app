@@ -3,7 +3,11 @@ import type {
   BottomSheetProps,
 } from '@gorhom/bottom-sheet';
 import { BlurView, type BlurViewProps } from 'expo-blur';
-import { GlassView, isGlassEffectAPIAvailable } from 'expo-glass-effect';
+import {
+  type GlassColorScheme,
+  GlassView,
+  isGlassEffectAPIAvailable,
+} from 'expo-glass-effect';
 import { BottomSheet, useBottomSheet } from 'heroui-native/bottom-sheet';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -96,7 +100,10 @@ interface UiBottomSheetProps {
 
   backgroundVariant?: UiBottomSheetBackgroundVariantT;
   backgroundBlurAmount?: number;
+  backgroundGlassBlurAmount?: number;
+  backgroundGlassColorScheme?: GlassColorScheme | undefined;
   backgroundGlassFallbackVariant?: UiBottomSheetBackgroundGlassFallbackVariantT;
+  backgroundGlassTintAmount?: number;
 
   overlayVariant?: UiBottomSheetOverlayVariantT;
   overlayBlurAmount?: number;
@@ -145,7 +152,10 @@ export const UiBottomSheet = ({
   // background
   backgroundVariant = UiBottomSheetBackgroundVariantE.Default,
   backgroundBlurAmount = 40,
+  backgroundGlassBlurAmount = 10,
+  backgroundGlassColorScheme = 'auto',
   backgroundGlassFallbackVariant = UiBottomSheetBackgroundVariantE.Blur,
+  backgroundGlassTintAmount = 10,
 
   // overlay
   overlayVariant = UiBottomSheetOverlayVariantE.Blur,
@@ -210,12 +220,18 @@ export const UiBottomSheet = ({
       getBottomSheetBackgroundComponent(
         backgroundVariant,
         backgroundBlurAmount,
+        backgroundGlassBlurAmount,
+        backgroundGlassColorScheme,
         backgroundGlassFallbackVariant,
+        backgroundGlassTintAmount,
         blurTarget
       ),
     [
       backgroundBlurAmount,
+      backgroundGlassBlurAmount,
+      backgroundGlassColorScheme,
       backgroundGlassFallbackVariant,
+      backgroundGlassTintAmount,
       backgroundVariant,
       blurTarget,
     ]
@@ -495,8 +511,11 @@ interface BottomSheetVisualBackgroundProps extends BottomSheetBackgroundProps {
 }
 
 interface BottomSheetGlassBackgroundProps
-  extends BottomSheetVisualBackgroundProps {
+  extends Omit<BottomSheetVisualBackgroundProps, 'blurAmount'> {
   fallbackVariant: UiBottomSheetBackgroundGlassFallbackVariantT;
+  glassBlurAmount: number;
+  glassColorScheme: GlassColorScheme;
+  glassTintAmount: number;
 }
 
 const BottomSheetDefaultBackground = ({
@@ -553,11 +572,16 @@ const BottomSheetBlurBackground = ({
 };
 
 const BottomSheetGlassBackground = (props: BottomSheetGlassBackgroundProps) => {
+  const { theme } = useUniwind();
+
   if (!getIsGlassEffectAvailable()) {
     return <BottomSheetGlassBackgroundFallback {...props} />;
   }
 
+  const { blurTarget, glassBlurAmount, glassColorScheme, glassTintAmount } =
+    props;
   const { pointerEvents, style } = props;
+  const tintColor = getGlassTintColor(theme, glassTintAmount);
 
   return (
     <View
@@ -565,10 +589,26 @@ const BottomSheetGlassBackground = (props: BottomSheetGlassBackgroundProps) => {
       pointerEvents={pointerEvents}
       style={style}
     >
+      {glassBlurAmount > 0 && (
+        <BlurView
+          blurMethod={androidBlurMethod}
+          blurTarget={blurTarget}
+          className="absolute inset-0 bg-transparent"
+          intensity={getBoundedAmount(glassBlurAmount)}
+          tint="systemMaterial"
+        />
+      )}
+      {tintColor && (
+        <View
+          className="absolute inset-0"
+          pointerEvents="none"
+          style={{ backgroundColor: tintColor }}
+        />
+      )}
       <GlassView
         className="absolute inset-0 bg-transparent"
-        colorScheme="auto"
-        glassEffectStyle="regular"
+        colorScheme={glassColorScheme}
+        glassEffectStyle="clear"
         style={StyleSheet.absoluteFill}
       />
     </View>
@@ -577,14 +617,22 @@ const BottomSheetGlassBackground = (props: BottomSheetGlassBackgroundProps) => {
 
 const BottomSheetGlassBackgroundFallback = ({
   fallbackVariant,
+  glassBlurAmount,
+  glassColorScheme,
+  glassTintAmount,
   ...props
 }: BottomSheetGlassBackgroundProps) => {
+  void glassColorScheme;
+  void glassTintAmount;
+
   switch (fallbackVariant) {
     case UiBottomSheetBackgroundVariantE.None:
     case UiBottomSheetBackgroundVariantE.Transparent:
       return null;
     case UiBottomSheetBackgroundVariantE.Blur:
-      return <BottomSheetBlurBackground {...props} />;
+      return (
+        <BottomSheetBlurBackground {...props} blurAmount={glassBlurAmount} />
+      );
     case UiBottomSheetBackgroundVariantE.Default:
       return <BottomSheetDefaultBackground {...props} />;
   }
@@ -604,23 +652,36 @@ const getResolvedOverlayVariant = (
   overlayVariant: UiBottomSheetOverlayVariantT,
   glassFallbackVariant: UiBottomSheetOverlayGlassFallbackVariantT
 ) => {
-  if (
-    overlayVariant === UiBottomSheetOverlayVariantE.Glass &&
-    !getIsGlassEffectAvailable()
-  ) {
+  if (isOverlayGlassVariant(overlayVariant) && !getIsGlassEffectAvailable()) {
     return glassFallbackVariant;
   }
 
   return overlayVariant;
 };
 
+const isOverlayGlassVariant = (
+  overlayVariant: UiBottomSheetOverlayVariantT
+) => {
+  return overlayVariant === UiBottomSheetOverlayVariantE.Glass;
+};
+
+const getBoundedAmount = (amount: number) => {
+  return Number.isFinite(amount) ? Math.min(Math.max(amount, 0), 100) : 0;
+};
+
 const getOverlayTintColor = (theme: string, amount: number) => {
-  const normalizedAmount = Number.isFinite(amount)
-    ? Math.min(Math.max(amount, 0), 100) / 100
-    : 0.4;
+  const normalizedAmount = getBoundedAmount(amount) / 100;
   const alpha = normalizedAmount * 1;
   const color = theme === 'light' ? '0, 0, 0' : '0, 0, 0';
 
+  return `rgba(${color}, ${alpha})`;
+};
+
+const getGlassTintColor = (theme: string, amount: number) => {
+  const alpha = getBoundedAmount(amount) / 100;
+  if (alpha <= 0) return undefined;
+
+  const color = theme === 'light' ? '255, 255, 255' : '0, 0, 0';
   return `rgba(${color}, ${alpha})`;
 };
 
@@ -663,7 +724,10 @@ const getBottomSheetBackgroundClassName = (
 const getBottomSheetBackgroundComponent = (
   backgroundVariant: UiBottomSheetBackgroundVariantT,
   backgroundBlurAmount: number,
+  backgroundGlassBlurAmount: number,
+  backgroundGlassColorScheme: GlassColorScheme,
   backgroundGlassFallbackVariant: UiBottomSheetBackgroundGlassFallbackVariantT,
+  backgroundGlassTintAmount: number,
   blurTarget: BlurViewProps['blurTarget']
 ) => {
   switch (backgroundVariant) {
@@ -682,9 +746,11 @@ const getBottomSheetBackgroundComponent = (
       return (props: BottomSheetBackgroundProps) => (
         <BottomSheetGlassBackground
           {...props}
-          blurAmount={backgroundBlurAmount}
           blurTarget={blurTarget}
           fallbackVariant={backgroundGlassFallbackVariant}
+          glassBlurAmount={backgroundGlassBlurAmount}
+          glassColorScheme={backgroundGlassColorScheme}
+          glassTintAmount={backgroundGlassTintAmount}
         />
       );
     case UiBottomSheetBackgroundVariantE.Default:

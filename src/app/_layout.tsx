@@ -20,6 +20,7 @@ export default function RootLayout() {
       <HeroUINativeProvider config={config}>
         <BlurViewProvider>
           <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="docs" />
             <Stack.Screen name="index" />
           </Stack>
         </BlurViewProvider>
