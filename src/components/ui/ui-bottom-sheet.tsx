@@ -3,14 +3,16 @@ import type {
   BottomSheetProps,
 } from '@gorhom/bottom-sheet';
 import { BlurView, type BlurViewProps } from 'expo-blur';
-import {
-  GlassView,
-  isGlassEffectAPIAvailable,
-  isLiquidGlassAvailable,
-} from 'expo-glass-effect';
+import { GlassView, isGlassEffectAPIAvailable } from 'expo-glass-effect';
 import { BottomSheet, useBottomSheet } from 'heroui-native/bottom-sheet';
 import { useEffect, useMemo, useState } from 'react';
-import { Platform, Pressable, useWindowDimensions, View } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import Animated, {
   type DerivedValue,
   Extrapolation,
@@ -46,6 +48,7 @@ export const UiBottomSheetBackgroundVariantE = {
   Transparent: 'transparent',
   Blur: 'blur',
   Glass: 'glass',
+  None: 'none',
 } as const;
 type UiBottomSheetBackgroundVariantT =
   (typeof UiBottomSheetBackgroundVariantE)[keyof typeof UiBottomSheetBackgroundVariantE];
@@ -218,9 +221,7 @@ export const UiBottomSheet = ({
     ]
   );
   const backgroundClassName =
-    backgroundVariant === UiBottomSheetBackgroundVariantE.Default
-      ? undefined
-      : cn('bg-transparent shadow-overlay');
+    getBottomSheetBackgroundClassName(backgroundVariant);
   const resolvedOverlayVariant = getResolvedOverlayVariant(
     overlayVariant,
     overlayGlassFallbackVariant
@@ -458,6 +459,7 @@ const BottomSheetOverlay = ({
             style: isOpen ? 'regular' : 'none',
           }}
           pointerEvents="none"
+          style={StyleSheet.absoluteFill}
         />
       )}
     </Pressable>
@@ -567,6 +569,7 @@ const BottomSheetGlassBackground = (props: BottomSheetGlassBackgroundProps) => {
         className="absolute inset-0 bg-transparent"
         colorScheme="auto"
         glassEffectStyle="regular"
+        style={StyleSheet.absoluteFill}
       />
     </View>
   );
@@ -577,6 +580,7 @@ const BottomSheetGlassBackgroundFallback = ({
   ...props
 }: BottomSheetGlassBackgroundProps) => {
   switch (fallbackVariant) {
+    case UiBottomSheetBackgroundVariantE.None:
     case UiBottomSheetBackgroundVariantE.Transparent:
       return null;
     case UiBottomSheetBackgroundVariantE.Blur:
@@ -590,7 +594,7 @@ const BottomSheetGlassBackgroundFallback = ({
 
 const getIsGlassEffectAvailable = () => {
   try {
-    return isGlassEffectAPIAvailable() && isLiquidGlassAvailable();
+    return Platform.OS === 'ios' && isGlassEffectAPIAvailable();
   } catch {
     return false;
   }
@@ -642,6 +646,20 @@ const getSafeAreaAdjustedSnapPoint = (
     : snapPoint;
 };
 
+const getBottomSheetBackgroundClassName = (
+  backgroundVariant: UiBottomSheetBackgroundVariantT
+) => {
+  switch (backgroundVariant) {
+    case UiBottomSheetBackgroundVariantE.None:
+    case UiBottomSheetBackgroundVariantE.Default:
+      return undefined;
+    case UiBottomSheetBackgroundVariantE.Transparent:
+    case UiBottomSheetBackgroundVariantE.Blur:
+    case UiBottomSheetBackgroundVariantE.Glass:
+      return cn('bg-transparent shadow-overlay');
+  }
+};
+
 const getBottomSheetBackgroundComponent = (
   backgroundVariant: UiBottomSheetBackgroundVariantT,
   backgroundBlurAmount: number,
@@ -649,6 +667,7 @@ const getBottomSheetBackgroundComponent = (
   blurTarget: BlurViewProps['blurTarget']
 ) => {
   switch (backgroundVariant) {
+    case UiBottomSheetBackgroundVariantE.None:
     case UiBottomSheetBackgroundVariantE.Transparent:
       return null;
     case UiBottomSheetBackgroundVariantE.Blur:

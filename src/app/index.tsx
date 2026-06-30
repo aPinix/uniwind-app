@@ -106,7 +106,7 @@ export default function Index() {
           StoreReview.requestReview();
         }}
       >
-        <Text className="font-bold text-white">Button</Text>
+        <Text className="font-bold text-white">App Review</Text>
       </Pressable>
 
       <View className="mt-2 gap-1 text-center">
