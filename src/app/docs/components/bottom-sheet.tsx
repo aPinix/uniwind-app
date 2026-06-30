@@ -1,10 +1,11 @@
+import { Button } from 'heroui-native/button';
 import {
   type ComponentPropsWithoutRef,
   type ComponentRef,
   forwardRef,
   useState,
 } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { type Pressable, Text, View } from 'react-native';
 import {
   DocsExamplePanel,
   DocsScreen,
@@ -212,13 +213,9 @@ const SheetTrigger = forwardRef<
   SheetTriggerProps
 >(({ label, ...props }, ref) => {
   return (
-    <Pressable
-      className="rounded-md border border-slate-200 bg-white px-4 py-3 active:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:active:bg-slate-700"
-      ref={ref}
-      {...props}
-    >
-      <Text className="font-bold text-slate-950 dark:text-white">{label}</Text>
-    </Pressable>
+    <Button ref={ref} variant="outline" {...props}>
+      {label}
+    </Button>
   );
 });
 

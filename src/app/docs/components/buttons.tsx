@@ -34,7 +34,11 @@ export default function ButtonDocs() {
               iconEnd={
                 <UiIcon
                   color="#ffffff"
-                  name="arrow.right.circle.fill"
+                  name={{
+                    android: 'arrow_circle_right',
+                    ios: 'arrow.right.circle.fill',
+                    web: 'arrow_circle_right',
+                  }}
                   size={18}
                 />
               }

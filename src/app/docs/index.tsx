@@ -22,13 +22,33 @@ export default function DocsIndex() {
         <DocsLinkCard
           description="Uniwind pseudo-class examples for interactive states."
           href="/docs/styling"
-          icon={<UiIcon color="#16a34a" name="paintbrush.fill" size={24} />}
+          icon={
+            <UiIcon
+              color="#16a34a"
+              name={{
+                android: 'brush',
+                ios: 'paintbrush.fill',
+                web: 'brush',
+              }}
+              size={24}
+            />
+          }
           title="Styling"
         />
         <DocsLinkCard
           description="Platform APIs and examples that do not belong to a component."
           href="/docs/other"
-          icon={<UiIcon color="#c2410c" name="star.bubble.fill" size={24} />}
+          icon={
+            <UiIcon
+              color="#c2410c"
+              name={{
+                android: 'stars',
+                ios: 'star.bubble.fill',
+                web: 'stars',
+              }}
+              size={24}
+            />
+          }
           title="Other"
         />
       </DocsSection>

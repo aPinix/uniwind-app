@@ -21,7 +21,17 @@ export default function ComponentDocsIndex() {
         <DocsLinkCard
           description="Plain, leading icon, and trailing icon button examples."
           href="/docs/components/buttons"
-          icon={<UiIcon color="#7c3aed" name="button.programmable" size={24} />}
+          icon={
+            <UiIcon
+              color="#7c3aed"
+              name={{
+                android: 'smart_button',
+                ios: 'button.programmable',
+                web: 'smart_button',
+              }}
+              size={24}
+            />
+          }
           title="Buttons"
         />
         <DocsLinkCard
@@ -30,7 +40,11 @@ export default function ComponentDocsIndex() {
           icon={
             <UiIcon
               color="#0891b2"
-              name="rectangle.bottomthird.inset.filled"
+              name={{
+                android: 'bottom_panel_open',
+                ios: 'rectangle.bottomthird.inset.filled',
+                web: 'bottom_panel_open',
+              }}
               size={24}
             />
           }
