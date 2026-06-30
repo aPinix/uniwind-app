@@ -2,10 +2,18 @@ import * as StoreReview from 'expo-store-review';
 import { Button } from 'heroui-native';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { UiBottomSheet } from '@/components/ui/ui-bottom-sheet';
+import {
+  UiBottomSheet,
+  UiBottomSheetBackgroundVariantE,
+} from '@/components/ui/ui-bottom-sheet';
 
 export default function Index() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpenBottomSheetDefault, setIsOpenBottomSheetDefault] =
+    useState(false);
+  const [isOpenBottomSheetTransparent, setIsOpenBottomSheetTransparent] =
+    useState(false);
+  const [isOpenBottomSheetBlur, setIsOpenBottomSheetBlur] = useState(false);
+  const [isOpenBottomSheetGlass, setIsOpenBottomSheetGlass] = useState(false);
 
   return (
     <View className="flex-1 items-center justify-center gap-4 bg-slate-50 px-10 dark:bg-slate-950">
@@ -25,14 +33,51 @@ export default function Index() {
       </View>
 
       <UiBottomSheet
-        title="Hello, world!"
+        title="Bottom Sheet Default"
         description="This is a description of the bottom sheet"
-        isOpen={isOpen}
+        isOpen={isOpenBottomSheetDefault}
+        backgroundVariant={UiBottomSheetBackgroundVariantE.Default}
         snapPoints={['50%', '80%', '100%']}
-        onOpenChange={setIsOpen}
-        trigger={<Button>Open Bottom Sheet</Button>}
+        onOpenChange={setIsOpenBottomSheetDefault}
+        trigger={<Button>Bottom Sheet Default</Button>}
       >
-        <Text>Hello, world!</Text>
+        <Text>Bottom Sheet Default</Text>
+      </UiBottomSheet>
+
+      <UiBottomSheet
+        title="Bottom Sheet Transparent"
+        description="This is a description of the bottom sheet"
+        isOpen={isOpenBottomSheetTransparent}
+        backgroundVariant={UiBottomSheetBackgroundVariantE.Transparent}
+        snapPoints={['50%', '80%', '100%']}
+        onOpenChange={setIsOpenBottomSheetTransparent}
+        trigger={<Button>Bottom Sheet Transparent</Button>}
+      >
+        <Text>Bottom Sheet Transparent</Text>
+      </UiBottomSheet>
+
+      <UiBottomSheet
+        title="Bottom Sheet Blur"
+        description="This is a description of the bottom sheet"
+        isOpen={isOpenBottomSheetBlur}
+        backgroundVariant={UiBottomSheetBackgroundVariantE.Blur}
+        snapPoints={['50%', '80%', '100%']}
+        onOpenChange={setIsOpenBottomSheetBlur}
+        trigger={<Button>Bottom Sheet Blur</Button>}
+      >
+        <Text>Bottom Sheet Blur</Text>
+      </UiBottomSheet>
+
+      <UiBottomSheet
+        title="Bottom Sheet Glass"
+        description="This is a description of the bottom sheet"
+        isOpen={isOpenBottomSheetGlass}
+        backgroundVariant={UiBottomSheetBackgroundVariantE.Glass}
+        snapPoints={['50%', '80%', '100%']}
+        onOpenChange={setIsOpenBottomSheetGlass}
+        trigger={<Button>Bottom Sheet Glass</Button>}
+      >
+        <Text>Bottom Sheet Glass</Text>
       </UiBottomSheet>
 
       <Pressable
