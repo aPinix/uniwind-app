@@ -5,6 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 import {
   UiBottomSheet,
   UiBottomSheetBackgroundVariantE,
+  UiBottomSheetOverlayVariantE,
 } from '@/components/ui/ui-bottom-sheet';
 
 export default function Index() {
@@ -33,48 +34,51 @@ export default function Index() {
       </View>
 
       <UiBottomSheet
-        title="Bottom Sheet Default"
+        backgroundVariant={UiBottomSheetBackgroundVariantE.Default}
         description="This is a description of the bottom sheet"
         isOpen={isOpenBottomSheetDefault}
-        backgroundVariant={UiBottomSheetBackgroundVariantE.Default}
-        snapPoints={['50%', '80%', '100%']}
         onOpenChange={setIsOpenBottomSheetDefault}
+        snapPoints={['50%', '80%', '100%']}
+        title="Bottom Sheet Default"
         trigger={<Button>Bottom Sheet Default</Button>}
       >
         <Text>Bottom Sheet Default</Text>
       </UiBottomSheet>
 
       <UiBottomSheet
-        title="Bottom Sheet Transparent"
-        description="This is a description of the bottom sheet"
-        isOpen={isOpenBottomSheetTransparent}
         backgroundVariant={UiBottomSheetBackgroundVariantE.Transparent}
-        snapPoints={['50%', '80%', '100%']}
+        description="This is a description of the bottom sheet"
+        hasHandle={false}
+        isOpen={isOpenBottomSheetTransparent}
         onOpenChange={setIsOpenBottomSheetTransparent}
+        overlayVariant={UiBottomSheetOverlayVariantE.Transparent}
+        snapPoints={['100%']}
+        title="Bottom Sheet Transparent"
         trigger={<Button>Bottom Sheet Transparent</Button>}
       >
         <Text>Bottom Sheet Transparent</Text>
       </UiBottomSheet>
 
       <UiBottomSheet
-        title="Bottom Sheet Blur"
+        backgroundVariant={UiBottomSheetBackgroundVariantE.Blur}
         description="This is a description of the bottom sheet"
         isOpen={isOpenBottomSheetBlur}
-        backgroundVariant={UiBottomSheetBackgroundVariantE.Blur}
-        snapPoints={['50%', '80%', '100%']}
         onOpenChange={setIsOpenBottomSheetBlur}
+        overlayVariant={UiBottomSheetOverlayVariantE.Transparent}
+        snapPoints={['50%', '80%', '100%']}
+        title="Bottom Sheet Blur"
         trigger={<Button>Bottom Sheet Blur</Button>}
       >
         <Text>Bottom Sheet Blur</Text>
       </UiBottomSheet>
 
       <UiBottomSheet
-        title="Bottom Sheet Glass"
+        backgroundVariant={UiBottomSheetBackgroundVariantE.Glass}
         description="This is a description of the bottom sheet"
         isOpen={isOpenBottomSheetGlass}
-        backgroundVariant={UiBottomSheetBackgroundVariantE.Glass}
-        snapPoints={['50%', '80%', '100%']}
         onOpenChange={setIsOpenBottomSheetGlass}
+        snapPoints={['50%', '80%', '100%']}
+        title="Bottom Sheet Glass"
         trigger={<Button>Bottom Sheet Glass</Button>}
       >
         <Text>Bottom Sheet Glass</Text>
